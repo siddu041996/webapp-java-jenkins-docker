@@ -1,0 +1,30 @@
+node {
+    
+    def buildNumber = BUILD_NUMBER
+    stage("Git Clone"){
+        git url: 'https://github.com/siddu041996/webapp-java-jenkins-docker.git', branch: 'master'
+    }
+    
+    stage("maven clean package"){
+        def mavenHome= tool name: "Maven-3.8.7", tool: "maven"
+        sh "${mavenHome}/bin/mvn clean package"
+    }
+    
+    stage("Build Docker Image"){
+        sh "docker build -t siddudevops/java-web-app-docker:${buildNumber} ."
+    }
+    
+    stage("docker login and push"){
+        withCredentials([string(credentialsId: 'DockerPwd', variable: 'DockerPwd')]) {
+        sh "docker login -u siddudevops -p ${DockerPwd}"
+    }
+        sh "docker push siddudevops/java-web-app-docker"
+    }
+    
+    stage("deployement to docker server"){
+        sshagent(['docker_pvt_key']) {
+         sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.81.73 docker rm -f javawebappcontainer || true"
+         sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.81.73 docker run -d -p 8080:8080 --name javawebappcontainer siddudevops/java-web-app-docker"    
+    }
+    }
+}
