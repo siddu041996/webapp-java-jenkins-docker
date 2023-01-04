@@ -18,13 +18,13 @@ node {
         withCredentials([string(credentialsId: 'DockerPwd', variable: 'DockerPwd')]) {
         sh "docker login -u siddudevops -p ${DockerPwd}"
     }
-        sh "docker push siddudevops/java-web-app-docker"
+        sh "docker push siddudevops/java-web-app-docker:${buildNumber}"
     }
     
     stage("deployement to docker server"){
         sshagent(['docker_pvt_key']) {
          sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.81.73 docker rm -f javawebappcontainer || true"
-         sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.81.73 docker run -d -p 8080:8080 --name javawebappcontainer siddudevops/java-web-app-docker"    
+         sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.81.73 docker run -d -p 8080:8080 --name javawebappcontainer siddudevops/java-web-app-docker:${buildNumber}"    
     }
     }
 }
